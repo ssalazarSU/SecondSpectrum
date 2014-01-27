@@ -1,1 +1,1 @@
-web: node ss.js
+web: node ssapp.js

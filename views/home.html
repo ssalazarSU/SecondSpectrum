@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8">
+		<title>
+				Second Spectrum
+		</title>
+            <!-- jQuery (necessary for Bootstrap's JavaScript plugins) -->
+            <script src="https://code.jquery.com/jquery.js"></script>
+		<script src="javascripts/d3.v3.min.js"  type="text/javascript"></script>
+		<script src="javascripts/crossfilter.min.js"  type="text/javascript"></script>
+            <script src="javascripts/bootstrap.min.js" type="text/javascript"></script>
+
+            <link rel="stylesheet" type="text/css" href="stylesheets/bootstrap.min.css"\>
+      </head>
+	<body>
+            <div class="page-header">
+              <h1>NBA Shooter Analysis:</h1>
+            </div>
+
+		<script type="text/javascript">
+            var dataEngine;
+
+            //Render user interactions (dropdowns etc.)
+            function renderUI(){
+                  seasons = dataEngine.getSeasons();
+                  locations = dataEngine.getLocations();
+                  players = dataEngine.getPlayers();
+                  d3.select("body")
+                     .append("div")
+                     .attr("class","row dropdowns")
+                     .style("margin-left","50px");
+                     
+
+                  d3.select(".dropdowns")
+                    .append("div")
+                    .attr("class","col-md-1 year-drop");
+
+                  d3.select(".dropdowns")
+                    .append("div")
+                    .attr("class","col-md-1 location-drop");
+
+                  d3.select(".dropdowns")
+                    .append("div")
+                    .attr("class","col-md-1 player-drop");
+
+                  d3.select(".dropdowns")
+                    .append("div")
+                    .attr("class","col-md-9 spacer");            
+
+                  d3.select("body")
+                     .append("div")
+                     .attr("class","row chart-canvas")
+                     .style("margin-top","25px")
+                     .style("margin-left","50px");
+
+                  d3.select(".chart-canvas")
+                     .append("div")
+                     .attr("class","row court-svg");
+
+                  //Set dropdowns
+                  d3.select('.year-drop')
+                     .append("select")
+                     .on("change",updateChartByYear)
+                     .attr("class", "year-dropdown .h3")
+                     .selectAll("option")
+                     .data(seasons)
+                     .enter()
+                     .append("option")
+                     .attr("value", function(d){ return d.key;})
+                     .text(function(d){return d.key;});
+                     
+
+                  d3.select('.location-drop')
+                     .append("select")
+                     .on("change",updateChartByLocation)
+                     .attr("class", "location-dropdown .h3")
+                     .selectAll("option")
+                     .data(locations)
+                     .enter()
+                     .append("option")
+                     .attr("value", function(d){ return d.key;})
+                     .text(function(d){return d.key;});  
+
+                  d3.select('.player-drop')
+                     .append("select")
+                     .on("change",updateChartByPlayer)
+                     .attr("class", "location-dropdown .h3")
+                     .selectAll("option")
+                     .data(players)
+                     .enter()
+                     .append("option")
+                     .attr("value", function(d){ return d.key;})
+                     .text(function(d){return d.key;}); 
+            }
+
+
+            function updateChartByYear(){
+
+                  dataEngine.setYearFilter(this.options[this.selectedIndex].value);
+                  renderChart();
+            }
+
+            function updateChartByLocation(){
+
+                  dataEngine.setLocationFilter(this.options[this.selectedIndex].value);
+                  renderChart();
+            }
+
+            function updateChartByPlayer(){
+
+                  dataEngine.setPlayerFilter(this.options[this.selectedIndex].value);
+                  renderChart();
+            }
+
+            function renderCanvas(){
+                  //Configure SVG canvas
+                  var svg = d3.select(".court-svg")
+                    .append("svg")
+                    .attr("width","652px")
+                    .attr("height","613px");
+
+                  //Draw basketball court background
+                  //Image borrowed from NBA.com
+                  svg.selectAll("image")
+                     .data([0])
+                     .enter()
+                     .append("svg:image")
+                     .attr("x",0)
+                     .attr("y",0)
+                     .attr("width", 652)
+                     .attr("height",613)
+                     .attr("xlink:href","static/images/court_image.png");  
+            }
+
+            //Render court and shots
+            function renderChart(){
+                  filteredData = dataEngine.retrieveData();
+
+                  //Set shot pct scale      
+                  var color = d3.scale.linear()
+                      .domain([0,100])
+                      .range(["red", "green"]);
+
+                  var size = d3.scale.linear()
+                      .domain([0,5])
+                      .range([3, 8]);
+
+                  var svg = d3.selectAll("svg");
+
+
+                  //Remove old dots
+                  svg.selectAll("circle").remove();
+
+                  //Draw all shots
+                  svg.selectAll("shot.dot")
+                     .data(filteredData)
+                     .enter()
+                     .append("circle")
+                     .filter(function(d){
+                        return d.value.total > 0;
+                     })
+                     .style("stroke","black")
+                     .style("fill", function(d){
+                        return color(d.value.pct);
+                     })
+                     .attr("cx", function(d){
+                         var xycoords = d.key.split(",");
+                         return (xycoords[0] * 12.36) + 17  ;
+                     })
+                     .attr("cy", function(d){
+                         var xycoords = d.key.split(",");
+                         return (xycoords[1] * 12.36) + 18;
+                     })
+                     .attr("r",function(d){
+                        if(d.value.total > 5){
+                          return size(5);  
+                        } else {
+                          return size(d.value.total);
+                        }    
+                     })
+                     .attr("data-toggle","tooltip")
+                     .attr("data-placement","bottom")
+                     .attr("data-original-title",function(d){
+                        return "Attempts: " + d.value.total + ", Made: " + d.value.made 
+                              + ", Shooting Pct: " + d.value.pct + "%";
+                     })
+                     .on("mouseover",function(d){
+                       
+                        var current = d3.select(this);
+                        current.style("stroke","white");
+                        d3.select("body")
+                              .append("div")
+                              .attr("class","tooltip fade bottom in")
+                              .style("left", current.attr("cx") + "px")
+                              .style("top", (parseInt(current.attr("cy")) + 50) + "px")
+                              .style("display","block");
+
+                        d3.selectAll(".tooltip")
+                              .append("div")
+                              .attr("class","tooltip-inner")
+                              .text(current.attr("data-original-title") );
+                        
+                     })
+                     .on("mouseout",function(){
+                        d3.select(this).style("stroke","black");
+                        d3.selectAll(".tooltip").remove();
+                     });
+            }
+
+            //DataEngine for filtering data
+            function DataEngine (data){
+                  //Set crossfilter data
+                  var stats = crossfilter(data),
+
+                  //Set dimensions
+                  season = stats.dimension(
+                        function(d){
+                              return d.season;
+                        }),
+                  player = stats.dimension(
+                        function(d){ 
+                              return d.player; 
+                        }),
+                  shots = stats.dimension(
+                        function(d){
+                              return d.result;
+      
+                        }),
+                  team = stats.dimension(
+                        function(d){
+                              return d.team;
+                        }),
+                  location = stats.dimension(
+                        function(d){
+                              return d.location;
+                        }),
+                  xycoord = stats.dimension(
+                        function(d){
+                              return d.xycoord;
+                        });
+                  
+
+                  //Get Groups
+                  this.getSeasons = function(){
+                        return season.group().all();
+                  };
+
+                  this.getPlayers = function(){
+                        return player.group().all();
+                  };
+
+                  this.getLocations = function(){
+                        return location.group().top(Infinity);
+                  };
+
+
+                  this.retrieveData = function(){
+                        
+                        //Define reduce functions
+                        function reduceAdd(p, v) {
+                          ++p.total;
+                          if(v.result=="made"){
+                              p.made += 1;
+                          } else {
+                              p.missed +=1;
+                          }
+                          p.pct = Math.floor((p.made/p.total)*100);
+                          return p;
+                        }
+
+                        function reduceRemove(p, v) {
+                          --p.total;
+                          if(v.result=="made"){
+                              p.made -= 1;
+                          } else {
+                              p.missed -=1;
+                          }
+                          p.pct = 0;
+                          return p;
+                        }
+
+                        function reduceInitial() {
+                          return {total: 0, made: 0, missed:0, pct:0};
+                        }
+
+                        function orderValue(p) {
+                          return p.pct;
+                        }
+
+                        var result = xycoord.group().reduce(reduceAdd, reduceRemove, reduceInitial).order(orderValue).top(Infinity);
+                        return result;
+                  };
+
+                  //Set filters
+                  this.setYearFilter = function(y){
+                        season.filter(y); 
+                  };
+
+                  this.setPlayerFilter = function(p){
+                        player.filter(p);
+                  };
+
+                  this.setLocationFilter = function(l){
+                        location.filter(l);
+                  };
+
+                  this.setYearFilter(2008);
+                  this.setPlayerFilter("Kobe Bryant");
+                  this.setLocationFilter("home");
+            };
+
+            
+            //Retrieve CSV, draw initial UI and SVG
+            d3.csv('static/cleaned_data/compiled_data.csv', function(d) {
+            	return {
+            		season: d.season,
+            		month: d.month,
+            		day: d.day,
+            		date: new Date(+d.season,+d.month,+d.day),
+            		location: d.team==d.awayteam ? 'away':'home',
+            		player: d.player,
+                        team: d.team,
+            		xcoord: +d.x,
+            		ycoord: +d.y,
+                        xycoord: d.x + ',' + d.y,
+                        result: d.result,
+                        points: +d.points
+            	};
+            }, function(error, data){
+                  
+                  dataEngine = new DataEngine(data);
+                  renderUI();
+                  renderCanvas();
+                  renderChart();
+            });
+        </script>
+	</body>
+</html>
