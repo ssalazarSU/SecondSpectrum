@@ -20,44 +20,13 @@
 
 		<script type="text/javascript">
             var dataEngine;
-
-            //Render user interactions (dropdowns etc.)
-            function renderUI(){
+            renderCanvas();
+            //Render user dropdowns
+            function renderDropdowns(){
                   seasons = dataEngine.getSeasons();
                   locations = dataEngine.getLocations();
                   players = dataEngine.getPlayers();
-                  d3.select("body")
-                     .append("div")
-                     .attr("class","row dropdowns")
-                     .style("margin-left","50px");
-                     
-
-                  d3.select(".dropdowns")
-                    .append("div")
-                    .attr("class","col-md-1 year-drop");
-
-                  d3.select(".dropdowns")
-                    .append("div")
-                    .attr("class","col-md-1 location-drop");
-
-                  d3.select(".dropdowns")
-                    .append("div")
-                    .attr("class","col-md-1 player-drop");
-
-                  d3.select(".dropdowns")
-                    .append("div")
-                    .attr("class","col-md-9 spacer");            
-
-                  d3.select("body")
-                     .append("div")
-                     .attr("class","row chart-canvas")
-                     .style("margin-top","25px")
-                     .style("margin-left","50px");
-
-                  d3.select(".chart-canvas")
-                     .append("div")
-                     .attr("class","row court-svg");
-
+            
                   //Set dropdowns
                   d3.select('.year-drop')
                      .append("select")
@@ -114,6 +83,38 @@
             }
 
             function renderCanvas(){
+                  //Page Layout
+                  d3.select("body")
+                     .append("div")
+                     .attr("class","row dropdowns")
+                     .style("margin-left","50px");
+                     
+
+                  d3.select(".dropdowns")
+                    .append("div")
+                    .attr("class","col-md-1 year-drop");
+
+                  d3.select(".dropdowns")
+                    .append("div")
+                    .attr("class","col-md-1 location-drop");
+
+                  d3.select(".dropdowns")
+                    .append("div")
+                    .attr("class","col-md-1 player-drop");
+
+                  d3.select(".dropdowns")
+                    .append("div")
+                    .attr("class","col-md-9 spacer");            
+
+                  d3.select("body")
+                     .append("div")
+                     .attr("class","row chart-canvas")
+                     .style("margin-top","25px")
+                     .style("margin-left","50px");
+
+                  d3.select(".chart-canvas")
+                     .append("div")
+                     .attr("class","row court-svg");
                   //Configure SVG canvas
                   var svg = d3.select(".court-svg")
                     .append("svg")
@@ -328,10 +329,9 @@
                         points: +d.points
             	};
             }, function(error, data){
-                  
                   dataEngine = new DataEngine(data);
-                  renderUI();
-                  renderCanvas();
+                  renderDropdowns();
+                  
                   renderChart();
             });
         </script>
