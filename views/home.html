@@ -114,7 +114,8 @@
 
                   d3.select(".chart-canvas")
                      .append("div")
-                     .attr("class","row court-svg");
+                     .attr("class","col-md-9 court-svg");
+                  
                   //Configure SVG canvas
                   var svg = d3.select(".court-svg")
                     .append("svg")
@@ -184,7 +185,7 @@
                      .attr("data-placement","bottom")
                      .attr("data-original-title",function(d){
                         return "Attempts: " + d.value.total + ", Made: " + d.value.made 
-                              + ", Shooting Pct: " + d.value.pct + "%";
+                              + ", Pct: " + d.value.pct + "%";
                      })
                      .on("mouseover",function(d){
                        
@@ -193,6 +194,7 @@
                         d3.select("body")
                               .append("div")
                               .attr("class","tooltip fade bottom in")
+                              .style("max-width","50")
                               .style("left", current.attr("cx") + "px")
                               .style("top", (parseInt(current.attr("cy")) + 50) + "px")
                               .style("display","block");
