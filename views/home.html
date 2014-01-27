@@ -20,6 +20,17 @@
 
 		<script type="text/javascript">
             var dataEngine;
+
+            //Set linear scales     
+            var color = d3.scale.linear()
+                .domain([0,100])
+                .range(["red", "green"]);
+
+            var size = d3.scale.linear()
+                .domain([0,5])
+                .range([3, 8]);
+
+            //Render Canvas
             renderCanvas();
             //Render user dropdowns
             function renderDropdowns(){
@@ -81,7 +92,97 @@
                   dataEngine.setPlayerFilter(this.options[this.selectedIndex].value);
                   renderChart();
             }
+            function renderLegend(){
+                  var svg = d3.selectAll(".legend-svg");
+                  svg.selectAll("lengend.dot")
+                     .data([0,20,40,60,80,100])
+                     .enter()
+                     .append("circle")
+                     .style("stroke","black")
+                     .style("fill", function(d){
+                        return color(d);
+                     })
+                     .attr("cx", function(d){
+                         return d + 20
+                     })
+                     .attr("cy", 20)
+                     .attr("r",5)
+                     .attr("data-toggle","tooltip")
+                     .attr("data-placement","bottom")
+                     .attr("data-original-title",function(d){
+                        return "Shot Pct: " + d + "%";
+                     })
+                     .on("mouseover",function(d){
+                       
+                        var current = d3.select(this);
+                        current.style("stroke","white");
+                        d3.select("body")
+                              .append("div")
+                              .attr("class","tooltip fade bottom in")
+                              .style("max-width","50")
+                              .style("left", 720 + d + "px")
+                              .style("top",  "190px")
+                              .style("display","inline");
 
+                        d3.selectAll(".tooltip")
+                              .append("div")
+                              .attr("class","tooltip-inner")
+                              .text(current.attr("data-original-title") );
+                        
+                     })
+                     .on("mouseout",function(){
+                        d3.select(this).style("stroke","black");
+                        d3.selectAll(".tooltip").remove();
+                     });
+
+                  var svg = d3.selectAll(".legend-svg");
+                  
+                  svg.selectAll("lengend.dot")
+                     .data([0,1,2,3,4,5])
+                     .enter()
+                     .append("circle")
+                     .style("stroke","black")
+                     .style("fill", "steelblue")
+                     .attr("cx", function(d){
+                         return (d * 20) + 20;
+                     })
+                     .attr("cy", 50)
+                     .attr("r",function(d){
+                        return size(d);
+                     })
+                     .attr("data-toggle","tooltip")
+                     .attr("data-placement","bottom")
+                     .attr("data-original-title",function(d){
+                        if(d < 5) {
+                          return "Number Shots: " + d;
+                        } else {
+                          return "Number Shots: >" + d;
+                        }
+                     })
+                     .on("mouseover",function(d){
+                       
+                        var current = d3.select(this);
+                        current.style("stroke","white");
+                        d3.select("body")
+                              .append("div")
+                              .attr("class","tooltip fade bottom in")
+                              .style("max-width","50")
+                              .style("left", 720 + (d * 20) + "px")
+                              .style("top", "230px")
+                              .style("display","inline");
+
+                        d3.selectAll(".tooltip")
+                              .append("div")
+                              .attr("class","tooltip-inner")
+                              .text(current.attr("data-original-title") );
+                        
+                     })
+                     .on("mouseout",function(){
+                        d3.select(this).style("stroke","black");
+                        d3.selectAll(".tooltip").remove();
+                     });
+
+            }
             function renderCanvas(){
                   //Page Layout
                   d3.select("body")
@@ -114,11 +215,16 @@
 
                   d3.select(".chart-canvas")
                      .append("div")
-                     .attr("class","col-md-9 court-svg");
+                     .attr("class","col-md-6 court");
+
+                  d3.select(".chart-canvas")
+                     .append("div")
+                     .attr("class","col-md-3 legend");   
                   
                   //Configure SVG canvas
-                  var svg = d3.select(".court-svg")
+                  var svg = d3.select(".court")
                     .append("svg")
+                    .attr("class","court-svg")
                     .attr("width","652px")
                     .attr("height","613px");
 
@@ -133,22 +239,24 @@
                      .attr("width", 652)
                      .attr("height",613)
                      .attr("xlink:href","static/images/court_image.png");  
+
+                  var svg2 = d3.select(".legend")
+                    .append("svg")
+                    .attr("class","legend-svg")
+                    .attr("width","150px")
+                    .attr("height","75px")
+                    .style("background-color","#E0E0E0");  
+
+                  renderLegend();
             }
 
             //Render court and shots
             function renderChart(){
                   filteredData = dataEngine.retrieveData();
 
-                  //Set shot pct scale      
-                  var color = d3.scale.linear()
-                      .domain([0,100])
-                      .range(["red", "green"]);
+                  
 
-                  var size = d3.scale.linear()
-                      .domain([0,5])
-                      .range([3, 8]);
-
-                  var svg = d3.selectAll("svg");
+                  var svg = d3.selectAll(".court-svg");
 
 
                   //Remove old dots
